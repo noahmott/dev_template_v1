@@ -23,7 +23,7 @@ A production-ready FastAPI template with built-in best practices, testing infras
 ### Security & Quality
 - **Bandit** - Security linting
 - **Pip-audit** - Dependency vulnerability scanning
-- **75% Test Coverage Requirement** - Enforced in CI
+- **85% Test Coverage Requirement** - Enforced in CI
 - **Policy Tests** - Enforce coding standards (ASCII logs, no empty stubs)
 
 ## Project Structure
@@ -125,7 +125,7 @@ Work through features using sequential "hats" with one commit per hat:
 ### Rails (Non-negotiables)
 See `docs/adr/ADR-000-rails.md` for architecture constraints:
 - JSON logging with ASCII only (no emojis)
-- Minimum 75% test coverage
+- Minimum 85% test coverage
 - No raw environment secrets (use Azure Key Vault or similar)
 - All code must pass ruff and mypy checks
 - Tests first approach
@@ -179,7 +179,7 @@ GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push and PR:
 - Type checking (mypy)
 - Security scanning (bandit, pip-audit)
 - Test execution with coverage reporting
-- Coverage threshold enforcement (75%)
+- Coverage threshold enforcement (85%)
 
 ## Customization Guide
 

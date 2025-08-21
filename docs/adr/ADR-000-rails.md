@@ -4,4 +4,4 @@
 - Logging: JSON, ASCII only (no emoji), request_id/call_id
 - Observability: OpenTelemetry traces + key metrics
 - Security: SAST, dep scan, secret scan on every PR
-- Contracts: tests first; coverage ≥ 75%; no new deps without justification
+- Contracts: tests first; coverage ≥ 85%; no new deps without justification
