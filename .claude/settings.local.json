@@ -4,7 +4,11 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(pip install:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(mypy:*)",
+      "Bash(grep:*)",
+      "Bash(ruff format:*)",
+      "Bash(ruff check:*)"
     ],
     "deny": [],
     "ask": []
