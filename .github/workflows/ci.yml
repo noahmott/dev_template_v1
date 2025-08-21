@@ -1,18 +1,50 @@
 name: ci
-on: [pull_request]
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: { python-version: '3.11' }
-      - run: pip install -r requirements.txt -r requirements-dev.txt
-      - name: Lint & format
-        run: ruff check . && ruff format --check .
-      - name: Types
-        run: mypy app
-      - name: Tests (coverage gate)
-        run: pytest -q --cov=app --cov-fail-under=75
-      - name: Security (SAST & deps)
-        run: pip install bandit pip-audit && bandit -r app && pip-audit --strict
+        with:
+          python-version: "3.11"
+      - run: pip install ruff
+      - run: ruff check .
+      - run: ruff format --check .
+
+  types:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install mypy
+      - run: mypy app
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install pytest pytest-cov
+      - run: pytest -q --cov=app --cov-fail-under=75
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install bandit pip-audit
+      - run: bandit -q -r app
+      - run: pip-audit --strict
