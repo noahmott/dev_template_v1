@@ -12,6 +12,7 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from app.models.scraping import BusinessInfo, JobStatus, Review, ScrapingJob
+from app.security.scraper_security import ScraperSecurity
 from app.services.scraper_service import ScraperService
 
 router = APIRouter(prefix="/api/v1/scraping", tags=["scraping"])
@@ -73,6 +74,16 @@ async def create_scraping_job(
         Job response with ID and status
     """
     scraper_service = await get_scraper_service()
+
+    # Security validation
+    if request.url:
+        ScraperSecurity.validate_url(request.url)
+    if request.platform:
+        ScraperSecurity.validate_platform(request.platform)
+    if request.business_name:
+        request.business_name = ScraperSecurity.sanitize_input(request.business_name)
+    if request.location:
+        request.location = ScraperSecurity.sanitize_input(request.location)
 
     # Validate request
     if not request.url and not (request.business_name and request.location and request.platform):
