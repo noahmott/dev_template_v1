@@ -60,15 +60,15 @@ class TestScrapeReviewsTool:
                 "rating": 5.0,
                 "date": "2024-01-01",
                 "author": "John Doe",
-                "platform": "yelp",
-                "url": "https://yelp.com/biz/test",
+                "platform": "google",
+                "url": "https://www.google.com/maps/place/test",
             }
         ]
 
         # Get the tool and call it directly
         tools = await mcp_server.get_tools()
         scrape_tool = tools["scrape_reviews"]
-        result = await scrape_tool.fn(url="https://yelp.com/biz/test", max_pages=1)
+        result = await scrape_tool.fn(url="https://www.google.com/maps/place/test", max_pages=1)
 
         assert len(result) == 1
         assert result[0]["text"] == "Great food!"
@@ -91,7 +91,7 @@ class TestScrapeReviewsTool:
 
         tools = await mcp_server.get_tools()
         scrape_tool = tools["scrape_reviews"]
-        result = await scrape_tool.fn(url="https://yelp.com/biz/test", max_pages=3)
+        result = await scrape_tool.fn(url="https://www.google.com/maps/place/test", max_pages=3)
 
         assert len(result) == 30
         assert mock_puppeteer.scrape_page.call_count == 3
@@ -101,15 +101,15 @@ class TestSearchAndScrapeTool:
     """Test the search_and_scrape MCP tool."""
 
     @pytest.mark.asyncio
-    async def test_search_and_scrape_yelp(self, mcp_server, mock_puppeteer):
-        """Test searching and scraping from Yelp."""
-        mock_puppeteer.search_business.return_value = "https://yelp.com/biz/test"
+    async def test_search_and_scrape_google(self, mcp_server, mock_puppeteer):
+        """Test searching and scraping from Google Reviews."""
+        mock_puppeteer.search_business.return_value = "https://www.google.com/maps/place/test"
         mock_puppeteer.scrape_page.return_value = [{"text": "Found via search", "rating": 4.5}]
 
         tools = await mcp_server.get_tools()
         search_tool = tools["search_and_scrape"]
         result = await search_tool.fn(
-            business_name="Test Restaurant", location="New York", platform="yelp"
+            business_name="Test Restaurant", location="New York", platform="google"
         )
 
         assert result["status"] == "completed"
@@ -142,7 +142,7 @@ class TestExtractBusinessInfoTool:
 
         tools = await mcp_server.get_tools()
         extract_tool = tools["extract_business_info"]
-        result = await extract_tool.fn(url="https://yelp.com/biz/test")
+        result = await extract_tool.fn(url="https://www.google.com/maps/place/test")
 
         assert result["name"] == "Test Restaurant"
         assert result["rating"] == 4.5
@@ -160,11 +160,11 @@ class TestRateLimiting:
 
         # Make 10 rapid requests (limit is 10/minute)
         for i in range(10):
-            await scrape_tool.fn(url=f"https://yelp.com/biz/test{i}", max_pages=1)
+            await scrape_tool.fn(url=f"https://www.google.com/maps/place/test{i}", max_pages=1)
 
         # 11th request should be rate limited
         with pytest.raises(Exception, match="Rate limit"):
-            await scrape_tool.fn(url="https://yelp.com/biz/test11", max_pages=1)
+            await scrape_tool.fn(url="https://www.google.com/maps/place/test11", max_pages=1)
 
 
 class TestCaching:
@@ -173,7 +173,7 @@ class TestCaching:
     @pytest.mark.asyncio
     async def test_cache_hit(self, mcp_server, mock_puppeteer):
         """Test that cached results are returned."""
-        url = "https://yelp.com/biz/test"
+        url = "https://www.google.com/maps/place/test"
         tools = await mcp_server.get_tools()
         scrape_tool = tools["scrape_reviews"]
 
@@ -200,7 +200,7 @@ class TestErrorHandling:
 
         tools = await mcp_server.get_tools()
         scrape_tool = tools["scrape_reviews"]
-        result = await scrape_tool.fn(url="https://yelp.com/biz/test", max_pages=1)
+        result = await scrape_tool.fn(url="https://www.google.com/maps/place/test", max_pages=1)
 
         assert len(result) == 1
         assert result[0]["text"] == "Success after retry"
@@ -213,4 +213,4 @@ class TestErrorHandling:
         tools = await mcp_server.get_tools()
         scrape_tool = tools["scrape_reviews"]
         with pytest.raises(TimeoutError):
-            await scrape_tool.fn(url="https://yelp.com/biz/test", max_pages=1)
+            await scrape_tool.fn(url="https://www.google.com/maps/place/test", max_pages=1)
