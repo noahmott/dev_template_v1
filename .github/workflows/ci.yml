@@ -54,7 +54,7 @@ jobs:
             requirements.txt
             requirements-dev.txt
       - run: pip install -r requirements.txt -r requirements-dev.txt
-      - run: pytest --cov=app --cov-report=term-missing --cov-fail-under=75
+      - run: python -m pytest --cov=app --cov-report=term-missing --cov-fail-under=75
 
   security:
     name: Security Scan
