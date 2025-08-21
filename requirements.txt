@@ -12,3 +12,7 @@ wordcloud
 Pillow
 openpyxl
 httpx
+pyppeteer
+fastmcp
+redis
+tenacity
