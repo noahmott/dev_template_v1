@@ -32,3 +32,4 @@ Thumbs.db
 *.log
 .env
 .env.local
+temp_notebook.ipynb

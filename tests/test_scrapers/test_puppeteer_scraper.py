@@ -92,7 +92,7 @@ class TestPuppeteerClient:
         mock_browser["page"].evaluate.side_effect = [
             [{"text": f"Review {i}", "rating": 4} for i in range(10)],
             True,  # Has next page
-            [{"text": f"Review {i+10}", "rating": 4} for i in range(10)],
+            [{"text": f"Review {i + 10}", "rating": 4} for i in range(10)],
             False,  # No more pages
         ]
 

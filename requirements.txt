@@ -1,2 +1,14 @@
 fastapi
 uvicorn[standard]
+pandas
+nltk
+textblob
+beautifulsoup4
+requests
+scikit-learn
+matplotlib
+seaborn
+wordcloud
+Pillow
+openpyxl
+httpx

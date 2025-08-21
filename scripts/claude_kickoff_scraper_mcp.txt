@@ -1,0 +1,125 @@
+Work on branch feat/mcp-scraper. Follow rails in docs/adr/ADR-000-rails.md.
+Run hats sequentially with ONE commit per hat:
+Planner → Tester → Scaffolder → Implementer → Security → Telemetry → Docs.
+Open a Draft PR named "SCRAPER-001 MCP-enabled web scraping with Puppeteer".
+Do NOT touch .github/, infra/, app/security/. Stop if tests stay red twice or need new deps.
+
+TICKET: SCRAPER-001
+FEATURE: MCP-Enabled Web Scraping Service
+GOAL: Build an MCP server that exposes modern scraping capabilities using Puppeteer for restaurant review collection
+
+CONTEXT:
+- Current system has manual Excel-based review data
+- Need automated, real-time scraping for multiple review platforms
+- MCP integration allows AI assistants to use scraping tools
+- Must handle JavaScript-heavy sites (Yelp, Google Reviews, TripAdvisor)
+- Using Puppeteer for JavaScript rendering capabilities
+
+ACCEPTANCE CRITERIA:
+1. MCP Server Setup
+   - [ ] MCP server runs on configurable port (default 3000)
+   - [ ] Exposes at least 3 scraping tools via MCP protocol
+   - [ ] Tools have clear descriptions and parameter schemas
+   - [ ] Server gracefully handles connection drops
+
+2. Scraping Capabilities
+   - [ ] Can scrape JavaScript-rendered content using Puppeteer
+   - [ ] Extracts: review text, rating, date, reviewer name, response (if any)
+   - [ ] Handles pagination automatically (up to configured limit)
+   - [ ] Supports Yelp, Google Reviews, TripAdvisor at minimum
+   - [ ] Direct search and navigation to business pages
+
+3. Data Quality
+   - [ ] Validates scraped data against expected schema
+   - [ ] Handles missing fields gracefully
+   - [ ] Deduplicates reviews by content hash
+   - [ ] Preserves original HTML for re-parsing if needed
+
+4. Performance & Reliability
+   - [ ] Implements exponential backoff for retries
+   - [ ] Rate limits: max 10 requests/minute per domain
+   - [ ] Timeout after 30 seconds per page
+   - [ ] Concurrent scraping limit: max 3 browsers
+   - [ ] Memory usage stays under 512MB per browser instance
+
+5. Compliance & Ethics
+   - [ ] Checks robots.txt before scraping
+   - [ ] Identifies as bot in User-Agent
+   - [ ] Respects 429 (Too Many Requests) responses
+   - [ ] No scraping of personal data beyond public reviews
+
+6. API Integration
+   - [ ] FastAPI endpoints for non-MCP access
+   - [ ] Webhook support for async scraping jobs
+   - [ ] Job status tracking with unique IDs
+   - [ ] Results cacheable for 24 hours
+
+CONSTRAINTS:
+- Python 3.11+ only
+- No browser UI (headless only)
+- Max 1000 reviews per scraping session
+- No login/authentication bypass
+- ASCII-only in logs (no emojis)
+- All errors must include correlation ID
+- No storage of PII beyond review author names
+- Must work on Windows, Mac, Linux
+
+TECHNICAL REQUIREMENTS:
+1. Dependencies (add to requirements.txt):
+   - fastmcp @ git+https://github.com/jlowin/fastmcp.git@main (latest FastMCP 2.0 from main branch)
+   - pyppeteer @ git+https://github.com/pyppeteer/pyppeteer.git@dev (latest from active fork)
+   - redis @ git+https://github.com/redis/redis-py.git@master (latest Redis Python client)
+   - tenacity @ git+https://github.com/jd/tenacity.git@main (latest retry library)
+   - pydantic>=2.0 (latest v2 - currently 2.37.2 core)
+
+2. Environment Variables:
+   - MCP_SERVER_PORT (default: 3000)
+   - REDIS_URL (default: redis://localhost:6379)
+   - MAX_CONCURRENT_BROWSERS (default: 3)
+   - SCRAPING_TIMEOUT_SECONDS (default: 30)
+
+3. MCP Tools to Implement:
+   - scrape_reviews(url: str, max_pages: int = 5) -> List[Review]
+   - search_and_scrape(business_name: str, location: str, platform: str) -> ScrapingJob
+   - extract_business_info(url: str) -> BusinessInfo
+
+4. FastAPI Endpoints:
+   - POST /api/v1/scraping/jobs - Create scraping job
+   - GET /api/v1/scraping/jobs/{id} - Get job status
+   - GET /api/v1/scraping/jobs/{id}/results - Get results
+   - DELETE /api/v1/scraping/jobs/{id} - Cancel job
+
+5. Data Models:
+   - Review: text, rating, date, author, platform, url
+   - BusinessResult: name, address, url, platform, rating
+   - ScrapingJob: id, status, created_at, completed_at, results
+
+TESTING REQUIREMENTS:
+- Unit tests for each scraper class
+- Integration tests with mock HTML responses
+- MCP protocol compliance tests
+- Rate limiting behavior tests
+- Error handling for network failures
+- Memory leak tests for browser instances
+- Coverage must stay ≥ 85%
+
+SUCCESS METRICS:
+- Successfully scrapes 3 different platforms
+- Handles 100 concurrent MCP requests without crash
+- 95% success rate on well-formed URLs
+- Average scraping time < 10s per page
+- Zero memory leaks after 1 hour of operation
+
+ROLLBACK PLAN:
+- Feature flag: ENABLE_MCP_SCRAPER (default: false)
+- Can disable MCP server without affecting main app
+- Fallback to manual data upload via Excel
+
+DEFINITION OF DONE:
+- [ ] All acceptance criteria met
+- [ ] Tests passing with ≥ 85% coverage
+- [ ] No security vulnerabilities (bandit scan clean)
+- [ ] Documentation complete
+- [ ] Code reviewed and approved
+- [ ] Deployed to staging environment
+- [ ] Smoke tests pass in staging
