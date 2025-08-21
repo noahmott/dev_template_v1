@@ -1,0 +1,5 @@
+Work on branch <BRANCH>. Follow rails in docs/adr/ADR-000-rails.md.
+Run hats sequentially with ONE commit per hat:
+Planner → Tester → Scaffolder → Implementer → Security → Telemetry → Docs.
+Open a Draft PR named "<TICKET> …".
+Do NOT touch .github/, infra/, app/security/. Stop if tests stay red twice or need new deps.

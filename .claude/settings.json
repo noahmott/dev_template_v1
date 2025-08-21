@@ -1,0 +1,7 @@
+{
+  "permissionMode": "auto",
+  "writeScope": "workspace",
+  "allowedPaths": ["app/", "tests/", "docs/plan/", "docs/adr/", "docs/security/"],
+  "blockedPaths": [".github/", "infra/", "app/security/"],
+  "defaultMode": "plan"
+}
