@@ -1,5 +1,7 @@
 # FastAPI Development Template v1
 
+[![Use this template](https://img.shields.io/badge/Use%20this-template-blue?style=for-the-badge)](https://github.com/noahmott/dev_template_v1/generate)
+
 A production-ready FastAPI template with built-in best practices, testing infrastructure, and development workflow.
 
 ## Features
