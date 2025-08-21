@@ -1,13 +1,23 @@
 """Google Reviews MCP server implementation."""
 
+import os
+from typing import Any
+
 from fastmcp import FastMCP
 
-# Scaffolding for Google Reviews MCP server
+from app.scrapers.google_reviews_scraper import GoogleReviewsScraper
+from app.services.google_scraper_service import GoogleScraperService
+
+# Initialize MCP server
 mcp_server = FastMCP("google-reviews-scraper")
+
+# Initialize services
+scraper = GoogleReviewsScraper()
+service = GoogleScraperService()
 
 
 @mcp_server.tool()
-async def scrape_google_reviews(url: str, max_pages: int = 5) -> list[dict]:
+async def scrape_google_reviews(url: str, max_pages: int = 5) -> list[dict[str, Any]]:
     """Scrape reviews from Google Maps/Business pages.
 
     Args:
@@ -17,11 +27,22 @@ async def scrape_google_reviews(url: str, max_pages: int = 5) -> list[dict]:
     Returns:
         List of review dictionaries
     """
-    pass
+    # Validate URL
+    if not url or not url.startswith(("https://www.google.com/maps/", "https://maps.google.com/")):
+        raise ValueError(f"Invalid Google Maps URL: {url}")
+
+    # Calculate max reviews from pages (approx 20 reviews per "page")
+    max_reviews = max_pages * 20
+
+    # Scrape reviews
+    reviews = await scraper.scrape_reviews(url, max_reviews=max_reviews)
+
+    # Convert to dictionaries
+    return [review.model_dump() for review in reviews]
 
 
 @mcp_server.tool()
-async def search_google_business(business_name: str, location: str) -> dict:
+async def search_google_business(business_name: str, location: str) -> dict[str, Any]:
     """Search for a business on Google Maps and scrape its reviews.
 
     Args:
@@ -31,11 +52,19 @@ async def search_google_business(business_name: str, location: str) -> dict:
     Returns:
         Scraping job with results
     """
-    pass
+    # Validate inputs
+    if not business_name or not location:
+        raise ValueError("Both business_name and location are required")
+
+    # Create and execute scraping job
+    job = await service.create_scraping_job(business_name, location)
+
+    # Return job details
+    return job.model_dump()
 
 
 @mcp_server.tool()
-async def extract_google_business_info(url: str) -> dict:
+async def extract_google_business_info(url: str) -> dict[str, Any]:
     """Extract business information from a Google Maps URL.
 
     Args:
@@ -44,9 +73,27 @@ async def extract_google_business_info(url: str) -> dict:
     Returns:
         Business information dictionary
     """
-    pass
+    # Validate URL
+    if not url or not url.startswith(("https://www.google.com/maps/", "https://maps.google.com/")):
+        raise ValueError(f"Invalid Google Maps URL: {url}")
+
+    # Extract business info
+    info = await scraper.extract_business_info(url)
+
+    if not info:
+        raise ValueError(f"Could not extract business information from {url}")
+
+    return info.model_dump()
 
 
 def create_mcp_server() -> FastMCP:
     """Create and configure the MCP server."""
     return mcp_server
+
+
+if __name__ == "__main__":
+    # Run the MCP server
+    import asyncio
+
+    port = int(os.getenv("MCP_SERVER_PORT", "3000"))
+    asyncio.run(mcp_server.run(port=port))

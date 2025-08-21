@@ -20,7 +20,7 @@ class Review(BaseModel):
     """Review data model."""
 
     text: str
-    rating: float
+    rating: float = Field(ge=0.0, le=5.0, description="Rating from 0 to 5")
     date: str
     author: str
     platform: str

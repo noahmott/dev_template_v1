@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from app.mcp.scraper_server import mcp_server
+from app.mcp.google_scraper_server import mcp_server
 from app.models.scraping import BusinessInfo, JobStatus, Review, ScrapingJob
 from app.scrapers.puppeteer_client import PuppeteerClient
 from app.services.scraper_service import ScraperService
