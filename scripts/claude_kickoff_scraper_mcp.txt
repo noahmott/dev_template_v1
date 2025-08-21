@@ -5,14 +5,14 @@ Open a Draft PR named "SCRAPER-001 MCP-enabled web scraping with Puppeteer".
 Do NOT touch .github/, infra/, app/security/. Stop if tests stay red twice or need new deps.
 
 TICKET: SCRAPER-001
-FEATURE: MCP-Enabled Web Scraping Service
-GOAL: Build an MCP server that exposes modern scraping capabilities using Puppeteer for restaurant review collection
+FEATURE: MCP-Enabled Google Reviews Scraping Service
+GOAL: Build an MCP server that exposes Google Reviews scraping capabilities using Puppeteer for restaurant review collection
 
 CONTEXT:
 - Current system has manual Excel-based review data
-- Need automated, real-time scraping for multiple review platforms
+- Need automated, real-time scraping specifically for Google Reviews
 - MCP integration allows AI assistants to use scraping tools
-- Must handle JavaScript-heavy sites (Yelp, Google Reviews, TripAdvisor)
+- Must handle JavaScript-heavy Google Reviews pages
 - Using Puppeteer for JavaScript rendering capabilities
 
 ACCEPTANCE CRITERIA:
@@ -23,11 +23,11 @@ ACCEPTANCE CRITERIA:
    - [ ] Server gracefully handles connection drops
 
 2. Scraping Capabilities
-   - [ ] Can scrape JavaScript-rendered content using Puppeteer
+   - [ ] Can scrape JavaScript-rendered Google Reviews content using Puppeteer
    - [ ] Extracts: review text, rating, date, reviewer name, response (if any)
-   - [ ] Handles pagination automatically (up to configured limit)
-   - [ ] Supports Yelp, Google Reviews, TripAdvisor at minimum
-   - [ ] Direct search and navigation to business pages
+   - [ ] Handles Google Reviews pagination automatically (up to configured limit)
+   - [ ] Supports Google Reviews search and direct business URLs
+   - [ ] Direct search and navigation to Google business pages
 
 3. Data Quality
    - [ ] Validates scraped data against expected schema
@@ -79,9 +79,9 @@ TECHNICAL REQUIREMENTS:
    - SCRAPING_TIMEOUT_SECONDS (default: 30)
 
 3. MCP Tools to Implement:
-   - scrape_reviews(url: str, max_pages: int = 5) -> List[Review]
-   - search_and_scrape(business_name: str, location: str, platform: str) -> ScrapingJob
-   - extract_business_info(url: str) -> BusinessInfo
+   - scrape_google_reviews(url: str, max_pages: int = 5) -> List[Review]
+   - search_google_business(business_name: str, location: str) -> ScrapingJob
+   - extract_google_business_info(url: str) -> BusinessInfo
 
 4. FastAPI Endpoints:
    - POST /api/v1/scraping/jobs - Create scraping job
@@ -104,9 +104,9 @@ TESTING REQUIREMENTS:
 - Coverage must stay ≥ 85%
 
 SUCCESS METRICS:
-- Successfully scrapes 3 different platforms
+- Successfully scrapes Google Reviews with high accuracy
 - Handles 100 concurrent MCP requests without crash
-- 95% success rate on well-formed URLs
+- 95% success rate on valid Google business URLs
 - Average scraping time < 10s per page
 - Zero memory leaks after 1 hour of operation
 

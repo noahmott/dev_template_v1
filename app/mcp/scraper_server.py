@@ -51,7 +51,7 @@ class SearchAndScrapeInput(BaseModel):
 
     business_name: str = Field(description="Name of the business to search for")
     location: str = Field(description="Location/city to search in")
-    platform: str = Field(description="Platform to search on (yelp, google, tripadvisor)")
+    platform: str = Field(description="Platform to search on (google, tripadvisor)")
     webhook_url: str | None = Field(None, description="Webhook URL for job completion")
 
 
@@ -130,7 +130,7 @@ async def search_and_scrape(
         Job information with ID and status
     """
     # Validate platform
-    supported_platforms = ["yelp", "google", "tripadvisor"]
+    supported_platforms = ["google", "tripadvisor"]  # Yelp removed due to DataDome
     if platform.lower() not in supported_platforms:
         raise ValueError(f"Unsupported platform: {platform}")
 

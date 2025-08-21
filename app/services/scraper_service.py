@@ -189,7 +189,8 @@ class ScraperService:
 
         try:
             if platform == "yelp":
-                reviews = await self.puppeteer_client.scrape_yelp_reviews(url, max_pages)
+                # Yelp is not supported
+                raise Exception("Yelp scraping is not supported")
             elif platform == "google":
                 reviews = await self.puppeteer_client.scrape_google_reviews(url, max_pages * 20)
             elif platform == "tripadvisor":

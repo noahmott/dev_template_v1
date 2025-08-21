@@ -29,21 +29,23 @@ class TestMCPServerInitialization:
         """Test MCP server is created with correct name."""
         assert mcp_server.name == "Restaurant Review Scraper"
 
-    def test_tools_registered(self, mcp_server):
+    @pytest.mark.asyncio
+    async def test_tools_registered(self, mcp_server):
         """Test all required tools are registered."""
-        tools = mcp_server.list_tools()
-        tool_names = [tool.name for tool in tools]
+        tools = await mcp_server.get_tools()
+        tool_names = list(tools.keys())
 
         assert "scrape_reviews" in tool_names
         assert "search_and_scrape" in tool_names
         assert "extract_business_info" in tool_names
 
-    def test_tool_descriptions(self, mcp_server):
+    @pytest.mark.asyncio
+    async def test_tool_descriptions(self, mcp_server):
         """Test tools have proper descriptions."""
-        tools = mcp_server.list_tools()
-        for tool in tools:
-            assert tool.description
-            assert len(tool.description) > 10
+        tools = await mcp_server.get_tools()
+        for _, tool_func in tools.items():
+            assert tool_func.description
+            assert len(tool_func.description) > 10
 
 
 class TestScrapeReviewsTool:
@@ -63,9 +65,10 @@ class TestScrapeReviewsTool:
             }
         ]
 
-        result = await mcp_server.call_tool(
-            "scrape_reviews", {"url": "https://yelp.com/biz/test", "max_pages": 1}
-        )
+        # Get the tool and call it directly
+        tools = await mcp_server.get_tools()
+        scrape_tool = tools["scrape_reviews"]
+        result = await scrape_tool.fn(url="https://yelp.com/biz/test", max_pages=1)
 
         assert len(result) == 1
         assert result[0]["text"] == "Great food!"
@@ -74,8 +77,10 @@ class TestScrapeReviewsTool:
     @pytest.mark.asyncio
     async def test_scrape_invalid_url(self, mcp_server):
         """Test scraping with invalid URL."""
+        tools = await mcp_server.get_tools()
+        scrape_tool = tools["scrape_reviews"]
         with pytest.raises(ValueError, match="Invalid URL"):
-            await mcp_server.call_tool("scrape_reviews", {"url": "not-a-url", "max_pages": 1})
+            await scrape_tool.fn(url="not-a-url", max_pages=1)
 
     @pytest.mark.asyncio
     async def test_scrape_pagination(self, mcp_server, mock_puppeteer):
@@ -84,9 +89,9 @@ class TestScrapeReviewsTool:
             [{"text": f"Review {i}", "rating": 4.0} for i in range(10)] for _ in range(3)
         ]
 
-        result = await mcp_server.call_tool(
-            "scrape_reviews", {"url": "https://yelp.com/biz/test", "max_pages": 3}
-        )
+        tools = await mcp_server.get_tools()
+        scrape_tool = tools["scrape_reviews"]
+        result = await scrape_tool.fn(url="https://yelp.com/biz/test", max_pages=3)
 
         assert len(result) == 30
         assert mock_puppeteer.scrape_page.call_count == 3
@@ -101,9 +106,10 @@ class TestSearchAndScrapeTool:
         mock_puppeteer.search_business.return_value = "https://yelp.com/biz/test"
         mock_puppeteer.scrape_page.return_value = [{"text": "Found via search", "rating": 4.5}]
 
-        result = await mcp_server.call_tool(
-            "search_and_scrape",
-            {"business_name": "Test Restaurant", "location": "New York", "platform": "yelp"},
+        tools = await mcp_server.get_tools()
+        search_tool = tools["search_and_scrape"]
+        result = await search_tool.fn(
+            business_name="Test Restaurant", location="New York", platform="yelp"
         )
 
         assert result["status"] == "completed"
@@ -113,11 +119,10 @@ class TestSearchAndScrapeTool:
     @pytest.mark.asyncio
     async def test_search_unsupported_platform(self, mcp_server):
         """Test searching on unsupported platform."""
+        tools = await mcp_server.get_tools()
+        search_tool = tools["search_and_scrape"]
         with pytest.raises(ValueError, match="Unsupported platform"):
-            await mcp_server.call_tool(
-                "search_and_scrape",
-                {"business_name": "Test", "location": "NYC", "platform": "unknown"},
-            )
+            await search_tool.fn(business_name="Test", location="NYC", platform="unknown")
 
 
 class TestExtractBusinessInfoTool:
@@ -135,9 +140,9 @@ class TestExtractBusinessInfoTool:
             "categories": ["Italian", "Pizza"],
         }
 
-        result = await mcp_server.call_tool(
-            "extract_business_info", {"url": "https://yelp.com/biz/test"}
-        )
+        tools = await mcp_server.get_tools()
+        extract_tool = tools["extract_business_info"]
+        result = await extract_tool.fn(url="https://yelp.com/biz/test")
 
         assert result["name"] == "Test Restaurant"
         assert result["rating"] == 4.5
@@ -150,17 +155,16 @@ class TestRateLimiting:
     @pytest.mark.asyncio
     async def test_rate_limit_enforcement(self, mcp_server, mock_puppeteer):
         """Test that rate limits are enforced."""
+        tools = await mcp_server.get_tools()
+        scrape_tool = tools["scrape_reviews"]
+
         # Make 10 rapid requests (limit is 10/minute)
         for i in range(10):
-            await mcp_server.call_tool(
-                "scrape_reviews", {"url": f"https://yelp.com/biz/test{i}", "max_pages": 1}
-            )
+            await scrape_tool.fn(url=f"https://yelp.com/biz/test{i}", max_pages=1)
 
         # 11th request should be rate limited
         with pytest.raises(Exception, match="Rate limit"):
-            await mcp_server.call_tool(
-                "scrape_reviews", {"url": "https://yelp.com/biz/test11", "max_pages": 1}
-            )
+            await scrape_tool.fn(url="https://yelp.com/biz/test11", max_pages=1)
 
 
 class TestCaching:
@@ -170,12 +174,14 @@ class TestCaching:
     async def test_cache_hit(self, mcp_server, mock_puppeteer):
         """Test that cached results are returned."""
         url = "https://yelp.com/biz/test"
+        tools = await mcp_server.get_tools()
+        scrape_tool = tools["scrape_reviews"]
 
         # First call - should hit puppeteer
-        result1 = await mcp_server.call_tool("scrape_reviews", {"url": url, "max_pages": 1})
+        result1 = await scrape_tool.fn(url=url, max_pages=1)
 
         # Second call - should return cached
-        result2 = await mcp_server.call_tool("scrape_reviews", {"url": url, "max_pages": 1})
+        result2 = await scrape_tool.fn(url=url, max_pages=1)
 
         assert result1 == result2
         mock_puppeteer.scrape_page.assert_called_once()
@@ -192,9 +198,9 @@ class TestErrorHandling:
             [{"text": "Success after retry", "rating": 4.0}],
         ]
 
-        result = await mcp_server.call_tool(
-            "scrape_reviews", {"url": "https://yelp.com/biz/test", "max_pages": 1}
-        )
+        tools = await mcp_server.get_tools()
+        scrape_tool = tools["scrape_reviews"]
+        result = await scrape_tool.fn(url="https://yelp.com/biz/test", max_pages=1)
 
         assert len(result) == 1
         assert result[0]["text"] == "Success after retry"
@@ -204,7 +210,7 @@ class TestErrorHandling:
         """Test timeout handling."""
         mock_puppeteer.scrape_page.side_effect = TimeoutError("Page load timeout")
 
+        tools = await mcp_server.get_tools()
+        scrape_tool = tools["scrape_reviews"]
         with pytest.raises(TimeoutError):
-            await mcp_server.call_tool(
-                "scrape_reviews", {"url": "https://yelp.com/biz/test", "max_pages": 1}
-            )
+            await scrape_tool.fn(url="https://yelp.com/biz/test", max_pages=1)

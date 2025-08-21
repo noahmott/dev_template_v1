@@ -5,10 +5,7 @@ import os
 from datetime import datetime
 from typing import Any
 
-try:
-    import aioredis
-except ImportError:
-    aioredis = None  # type: ignore
+import redis.asyncio as redis
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from pydantic import BaseModel, Field
 
@@ -30,9 +27,9 @@ async def get_scraper_service() -> ScraperService:
         # Initialize Redis client if configured
         redis_client = None
         redis_url = os.getenv("REDIS_URL")
-        if redis_url and aioredis:
+        if redis_url:
             try:
-                redis_client = await aioredis.from_url(redis_url)  # type: ignore
+                redis_client = await redis.from_url(redis_url)
             except Exception as e:
                 logger.warning(f"Failed to connect to Redis: {e}")
 

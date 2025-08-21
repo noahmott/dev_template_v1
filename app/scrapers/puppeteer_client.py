@@ -12,6 +12,7 @@ from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 from pyppeteer import launch
 from pyppeteer.browser import Browser
+from pyppeteer_stealth import stealth
 from tenacity import (
     retry,
     retry_if_exception_type,
@@ -72,24 +73,42 @@ class PuppeteerClient:
         async with self.semaphore:
             browser = None
             try:
-                browser = await launch(
-                    headless=True,
-                    args=[
+                # Try to use existing Chromium if available
+                chromium_path = (
+                    r"C:\Users\noahm\AppData\Local\ms-playwright"
+                    r"\chromium-1181\chrome-win\chrome.exe"
+                )
+                launch_kwargs = {
+                    "headless": True,
+                    "args": [
                         "--no-sandbox",
                         "--disable-setuid-sandbox",
                         "--disable-dev-shm-usage",
-                        "--disable-accelerated-2d-canvas",
-                        "--no-first-run",
-                        "--no-zygote",
-                        "--single-process",
-                        "--disable-gpu",
+                        "--disable-blink-features=AutomationControlled",
+                        "--disable-infobars",
+                        "--window-size=1920,1080",
+                        "--start-maximized",
+                        "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                        "AppleWebKit/537.36 (KHTML, like Gecko) "
+                        "Chrome/120.0.0.0 Safari/537.36",
                     ],
-                )
+                }
+                if os.path.exists(chromium_path):
+                    launch_kwargs["executablePath"] = chromium_path
+
+                browser = await launch(**launch_kwargs)
                 self.browsers.append(browser)
 
                 page = await browser.newPage()
+
+                # Apply stealth techniques to avoid detection
+                await stealth(page)
+
+                # Use a real browser user agent
                 await page.setUserAgent(
-                    "Mozilla/5.0 (compatible; RestaurantScraperBot/1.0; +https://example.com/bot)"
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/120.0.0.0 Safari/537.36"
                 )
 
                 await page.goto(url, {"waitUntil": "networkidle2", "timeout": self.timeout})
@@ -234,24 +253,42 @@ class PuppeteerClient:
         async with self.semaphore:
             browser = None
             try:
-                browser = await launch(
-                    headless=True,
-                    args=[
+                # Try to use existing Chromium if available
+                chromium_path = (
+                    r"C:\Users\noahm\AppData\Local\ms-playwright"
+                    r"\chromium-1181\chrome-win\chrome.exe"
+                )
+                launch_kwargs = {
+                    "headless": True,
+                    "args": [
                         "--no-sandbox",
                         "--disable-setuid-sandbox",
                         "--disable-dev-shm-usage",
-                        "--disable-accelerated-2d-canvas",
-                        "--no-first-run",
-                        "--no-zygote",
-                        "--single-process",
-                        "--disable-gpu",
+                        "--disable-blink-features=AutomationControlled",
+                        "--disable-infobars",
+                        "--window-size=1920,1080",
+                        "--start-maximized",
+                        "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                        "AppleWebKit/537.36 (KHTML, like Gecko) "
+                        "Chrome/120.0.0.0 Safari/537.36",
                     ],
-                )
+                }
+                if os.path.exists(chromium_path):
+                    launch_kwargs["executablePath"] = chromium_path
+
+                browser = await launch(**launch_kwargs)
                 self.browsers.append(browser)
 
                 page = await browser.newPage()
+
+                # Apply stealth techniques to avoid detection
+                await stealth(page)
+
+                # Use a real browser user agent
                 await page.setUserAgent(
-                    "Mozilla/5.0 (compatible; RestaurantScraperBot/1.0; +https://example.com/bot)"
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/120.0.0.0 Safari/537.36"
                 )
 
                 await page.goto(url, {"waitUntil": "networkidle2", "timeout": self.timeout})
@@ -739,9 +776,8 @@ class PuppeteerClient:
         encoded_location = urllib.parse.quote_plus(location)
 
         if platform == "yelp":
-            return (
-                f"https://www.yelp.com/search?find_desc={encoded_name}&find_loc={encoded_location}"
-            )
+            self.logger.error("Yelp platform is not supported due to anti-bot protection")
+            return None  # Yelp not supported
         elif platform == "google":
             return f"https://www.google.com/maps/search/{encoded_name}+{encoded_location}"
         elif platform == "tripadvisor":
