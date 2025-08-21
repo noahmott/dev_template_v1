@@ -3,6 +3,7 @@
 import logging
 import os
 from datetime import datetime
+from typing import Any
 
 try:
     import aioredis
@@ -301,5 +302,16 @@ async def health_check() -> dict[str, str]:
     Returns:
         Health status
     """
-    # Implementation will be added in IMPLEMENTER phase
     return {"status": "healthy", "service": "scraping"}
+
+
+@router.get("/metrics")
+async def get_metrics() -> dict[str, Any]:
+    """Get scraping service metrics.
+
+    Returns:
+        Metrics summary
+    """
+    from app.telemetry.scraper_metrics import metrics
+
+    return metrics.get_metrics_summary()
