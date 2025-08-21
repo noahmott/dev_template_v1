@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 from app.cache.google_cache import GoogleReviewsCache
 from app.scrapers.google_reviews_scraper import GoogleReviewsScraper
+from app.security.google_scraper_security import GoogleScraperSecurity
 from app.services.google_scraper_service import GoogleScraperService
 
 router = APIRouter(prefix="/api/v1/google", tags=["google-reviews"])
@@ -15,6 +16,7 @@ router = APIRouter(prefix="/api/v1/google", tags=["google-reviews"])
 scraper = GoogleReviewsScraper()
 service = GoogleScraperService()
 cache = GoogleReviewsCache()
+security = GoogleScraperSecurity()
 
 
 class GoogleSearchRequest(BaseModel):
@@ -42,18 +44,18 @@ async def search_google_business(request: GoogleSearchRequest) -> dict[str, Any]
         Scraping job with Google Maps URL
     """
     try:
+        # Sanitize inputs
+        business_name = security.sanitize_input(request.business_name, max_length=200)
+        location = security.sanitize_input(request.location, max_length=200)
+
         # Check cache first
-        cache_key = cache.generate_key(
-            url="search", business_name=request.business_name, location=request.location
-        )
+        cache_key = cache.generate_key(url="search", business_name=business_name, location=location)
         cached_result = await cache.get(cache_key)
         if cached_result:
             return cached_result
 
         # Create scraping job
-        job = await service.create_scraping_job(
-            business_name=request.business_name, location=request.location
-        )
+        job = await service.create_scraping_job(business_name=business_name, location=location)
 
         result = job.model_dump()
 
@@ -78,9 +80,9 @@ async def scrape_google_reviews(request: GoogleScrapeRequest) -> list[dict[str, 
         List of scraped reviews
     """
     try:
-        # Validate URL
-        if not request.url.startswith(("https://www.google.com/maps/", "https://maps.google.com/")):
-            raise HTTPException(status_code=400, detail="Invalid Google Maps URL")
+        # Validate URL with security check
+        if not security.validate_google_url(request.url):
+            raise HTTPException(status_code=400, detail="Invalid or unsafe Google Maps URL")
 
         # Check cache
         cache_key = cache.generate_key(url=request.url, max_pages=request.max_pages)
