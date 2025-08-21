@@ -101,12 +101,13 @@ async def scrape_reviews(url: str, max_pages: int = 5) -> list[dict[str, Any]]:
     scraper_service = await get_scraper_service()
 
     try:
-        reviews = await scraper_service.scrape_url(url, max_pages)
+        reviews = await scraper_service.scrape_reviews(url, max_pages)
 
         # Cache results for 24 hours
-        await redis_client.set(cache_key, json.dumps(reviews), ex=86400)
+        review_dicts = [review.model_dump() for review in reviews]
+        await redis_client.set(cache_key, json.dumps(review_dicts), ex=86400)
 
-        return reviews
+        return review_dicts
     except Exception as e:
         # Retry logic is handled by the service
         raise e

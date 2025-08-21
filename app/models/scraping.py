@@ -51,3 +51,8 @@ class ScrapingJob(BaseModel):
     error: str | None = None
     url: str | None = None
     webhook_url: str | None = None
+    business_name: str | None = None
+    location: str | None = None
+    platform: str | None = None
+    max_pages: int = 5
+    progress: int = 0
