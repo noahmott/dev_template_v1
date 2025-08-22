@@ -14,16 +14,17 @@ A production-ready FastAPI template with built-in best practices, testing infras
 - **OpenTelemetry Ready** - Observability infrastructure
 
 ### Development Tools
-- **Pre-commit Hooks** - Automatic code quality checks
+- **Pre-commit Hooks** - Comprehensive automatic code quality checks
 - **Ruff** - Fast Python linter and formatter
-- **MyPy** - Static type checking
-- **Pytest** - Comprehensive testing framework
+- **MyPy** - Strict static type checking
+- **Pytest** - Comprehensive testing framework with coverage
+- **Vulture** - Dead code detection
 - **GitHub Actions** - CI/CD pipeline ready
 
 ### Security & Quality
-- **Bandit** - Security linting
+- **Bandit** - Security vulnerability scanning
 - **Pip-audit** - Dependency vulnerability scanning
-- **85% Test Coverage Requirement** - Enforced in CI
+- **85% Test Coverage Requirement** - Enforced in CI and pre-commit
 - **Policy Tests** - Enforce coding standards (ASCII logs, no empty stubs)
 
 ## Project Structure
@@ -49,9 +50,21 @@ dev_template_v1/
 │   └── security/                    # Security reviews
 ├── scripts/
 │   └── claude_kickoff.txt          # Development workflow guide
+├── .claude/
+│   ├── agents/
+│   │   ├── docs.md                 # Documentation agent
+│   │   ├── implementer.md          # Implementation agent
+│   │   ├── orchestrator.md         # Pipeline orchestrator
+│   │   ├── planner.md              # Planning agent
+│   │   ├── scaffolder.md           # Scaffolding agent
+│   │   ├── security.md             # Security agent
+│   │   ├── telemetry.md            # Telemetry agent
+│   │   └── tester.md               # Testing agent
+│   └── settings.json                # Claude-specific settings
 ├── .github/
 │   └── workflows/
 │       └── ci.yml                   # GitHub Actions CI pipeline
+├── .pre-commit-config.yaml          # Pre-commit hooks configuration
 ├── pyproject.toml                   # Python project configuration
 ├── requirements.txt                 # Production dependencies
 └── requirements-dev.txt            # Development dependencies
@@ -109,7 +122,18 @@ dev_template_v1/
 
 ## Development Workflow
 
-This template includes a structured development workflow documented in `scripts/claude_kickoff.txt`:
+This template includes a structured development workflow with AI agents and orchestration:
+
+### AI-Powered Development Agents
+The `.claude/agents/` directory contains specialized agents for each development phase:
+- **orchestrator.md** - Coordinates the entire development pipeline with quality gates
+- **planner.md** - Designs features and creates planning documents
+- **tester.md** - Writes comprehensive test suites following TDD
+- **scaffolder.md** - Creates file structure and interfaces
+- **implementer.md** - Writes production code
+- **security.md** - Performs security analysis and hardening
+- **telemetry.md** - Adds observability and monitoring
+- **docs.md** - Creates architecture decision records (ADRs)
 
 ### Hat-Based Development Process
 Work through features using sequential "hats" with one commit per hat:
@@ -127,8 +151,9 @@ See `docs/adr/ADR-000-rails.md` for architecture constraints:
 - JSON logging with ASCII only (no emojis)
 - Minimum 85% test coverage
 - No raw environment secrets (use Azure Key Vault or similar)
-- All code must pass ruff and mypy checks
-- Tests first approach
+- All code must pass ruff, mypy, bandit, and vulture checks
+- Tests first approach (TDD)
+- No dead code allowed
 
 ## API Endpoints
 
@@ -165,11 +190,15 @@ strict = true
 ```
 
 ### Pre-commit Hooks
-- Ruff (linting & formatting)
-- End of file fixer
-- Trailing whitespace removal
-- Merge conflict detection
-- Debug statement detection
+The template includes comprehensive pre-commit hooks that run automatically:
+- **Ruff** - Python linting and auto-formatting
+- **MyPy** - Strict type checking with FastAPI support
+- **Bandit** - Security vulnerability scanning (skips test assertions)
+- **Vulture** - Dead code detection (80% confidence threshold)
+- **Pytest** - Runs tests on Python file changes
+- **File validators** - YAML, JSON, TOML syntax checking
+- **Code hygiene** - EOL fixer, trailing whitespace, merge conflicts
+- **Security** - Detect private keys, large files
 
 ## CI/CD
 
