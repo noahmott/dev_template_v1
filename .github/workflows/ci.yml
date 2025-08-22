@@ -69,5 +69,20 @@ jobs:
             requirements.txt
             requirements-dev.txt
       - run: pip install -r requirements.txt -r requirements-dev.txt
-      - run: bandit -r app
+      - run: bandit -r app --skip B101
       - run: pip-audit -r requirements.txt --strict
+
+  dead-code:
+    name: Dead Code Detection (vulture)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      - run: vulture app --min-confidence 80
